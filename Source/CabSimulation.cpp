@@ -2,6 +2,8 @@
 
 CabSimulation::CabSimulation()
 {
+    micBlendSmoothed.setCurrentAndTargetValue(0.0f);
+    roomSizeSmoothed.setCurrentAndTargetValue(0.3f);
 }
 
 CabSimulation::~CabSimulation()
@@ -12,42 +14,95 @@ void CabSimulation::prepare(const juce::dsp::ProcessSpec& spec)
 {
     sampleRate = spec.sampleRate;
     
-    convolution.prepare(spec);
+    closeMicConvolution.prepare(spec);
+    farMicConvolution.prepare(spec);
+    roomConvolution.prepare(spec);
     lowPassFilter.prepare(spec);
     highPassFilter.prepare(spec);
-    micColorFilter.prepare(spec);
+    resonanceFilter.prepare(spec);
+    roomReverb.prepare(spec);
     
-    generateSyntheticIR();
+    micBlendSmoothed.reset(spec.sampleRate, 0.05);
+    roomSizeSmoothed.reset(spec.sampleRate, 0.1);
+    
+    generateHighQualityIR();
     updateFilters();
 }
 
 void CabSimulation::process(juce::dsp::ProcessContextReplacing<float>& context)
 {
-    convolution.process(context);
-    lowPassFilter.process(context);
-    highPassFilter.process(context);
-    micColorFilter.process(context);
+    auto& inputBlock = context.getInputBlock();
+    auto& outputBlock = context.getOutputBlock();
+    
+    juce::dsp::AudioBlock<float> closeMicBlock(outputBlock);
+    juce::dsp::AudioBlock<float> farMicBlock(outputBlock);
+    juce::dsp::AudioBlock<float> roomBlock(outputBlock);
+    
+    juce::dsp::ProcessContextReplacing<float> closeMicContext(closeMicBlock);
+    juce::dsp::ProcessContextReplacing<float> farMicContext(farMicBlock);
+    juce::dsp::ProcessContextReplacing<float> roomContext(roomBlock);
+    
+    closeMicContext.getOutputBlock().copyFrom(inputBlock);
+    farMicContext.getOutputBlock().copyFrom(inputBlock);
+    roomContext.getOutputBlock().copyFrom(inputBlock);
+    
+    resonanceFilter.process(closeMicContext);
+    closeMicConvolution.process(closeMicContext);
+    
+    lowPassFilter.process(farMicContext);
+    farMicConvolution.process(farMicContext);
+    
+    highPassFilter.process(roomContext);
+    roomConvolution.process(roomContext);
+    roomReverb.process(roomContext);
+    
+    updateMicBlending();
+    
+    for (size_t channel = 0; channel < outputBlock.getNumChannels(); ++channel)
+    {
+        auto* outputData = outputBlock.getChannelPointer(channel);
+        auto* closeMicData = closeMicBlock.getChannelPointer(channel);
+        auto* farMicData = farMicBlock.getChannelPointer(channel);
+        auto* roomData = roomBlock.getChannelPointer(channel);
+        
+        for (size_t sample = 0; sample < outputBlock.getNumSamples(); ++sample)
+        {
+            float blend = micBlendSmoothed.getNextValue();
+            float roomAmount = roomSizeSmoothed.getNextValue();
+            
+            float closeMicLevel = (1.0f - blend) * (1.0f - roomAmount * 0.5f);
+            float farMicLevel = blend * (1.0f - roomAmount * 0.3f);
+            float roomLevel = roomAmount * 0.4f;
+            
+            outputData[sample] = closeMicData[sample] * closeMicLevel +
+                               farMicData[sample] * farMicLevel +
+                               roomData[sample] * roomLevel;
+        }
+    }
 }
 
 void CabSimulation::reset()
 {
-    convolution.reset();
+    closeMicConvolution.reset();
+    farMicConvolution.reset();
+    roomConvolution.reset();
     lowPassFilter.reset();
     highPassFilter.reset();
-    micColorFilter.reset();
+    resonanceFilter.reset();
+    roomReverb.reset();
 }
 
 void CabSimulation::setInstrumentType(bool isBass)
 {
     isBassMode = isBass;
     updateFilters();
-    generateSyntheticIR();
+    generateHighQualityIR();
 }
 
 void CabSimulation::setCabModel(CabModel model)
 {
     currentCabModel = model;
-    generateSyntheticIR();
+    generateHighQualityIR();
     updateFilters();
 }
 
@@ -59,79 +114,128 @@ void CabSimulation::setMicType(MicType mic)
 
 void CabSimulation::setMicDistance(float distance)
 {
+    micDistance = juce::jlimit(0.0f, 1.0f, distance);
     updateFilters();
+}
+
+void CabSimulation::setMicBlend(float blend)
+{
+    micBlend = juce::jlimit(0.0f, 1.0f, blend);
+    micBlendSmoothed.setTargetValue(micBlend);
+}
+
+void CabSimulation::setRoomSize(float size)
+{
+    roomSize = juce::jlimit(0.0f, 1.0f, size);
+    roomSizeSmoothed.setTargetValue(roomSize);
+    
+    juce::Reverb::Parameters reverbParams;
+    reverbParams.roomSize = roomSize;
+    reverbParams.damping = 0.5f + roomSize * 0.3f;
+    reverbParams.wetLevel = roomSize * 0.3f;
+    reverbParams.dryLevel = 1.0f - roomSize * 0.2f;
+    roomReverb.setParameters(reverbParams);
 }
 
 void CabSimulation::updateFilters()
 {
-    float lowPassFreq, highPassFreq, micPeakFreq;
+    double lowPassFreq = isBassMode ? 4000.0 : 7000.0;
+    double highPassFreq = isBassMode ? 30.0 : 60.0;
+    double resonanceFreq = isBassMode ? 180.0 : 350.0;
     
-    if (isBassMode)
-    {
-        lowPassFreq = 5000.0f;
-        highPassFreq = 40.0f;
-        micPeakFreq = 2000.0f;
-    }
-    else
-    {
-        lowPassFreq = 8000.0f;
-        highPassFreq = 80.0f;
-        micPeakFreq = 5000.0f;
-    }
+    lowPassFreq *= (1.0 + micDistance * 0.3);
+    highPassFreq *= (1.0 - micDistance * 0.2);
     
-    switch (currentMicType)
-    {
-        case Dynamic57:
-            micPeakFreq *= 1.0f;
-            break;
-        case Dynamic421:
-            micPeakFreq *= 0.8f;
-            break;
-        case Condenser414:
-            micPeakFreq *= 1.2f;
-            lowPassFreq *= 1.5f;
-            break;
-        case Ribbon121:
-            micPeakFreq *= 0.6f;
-            lowPassFreq *= 0.7f;
-            break;
-    }
-    
-    *lowPassFilter.state = *juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, lowPassFreq);
-    *highPassFilter.state = *juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, highPassFreq);
-    *micColorFilter.state = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, micPeakFreq, 1.0f, 1.2f);
+    *lowPassFilter.state = *juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, lowPassFreq, 0.8);
+    *highPassFilter.state = *juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, highPassFreq, 0.7);
+    *resonanceFilter.state = *juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, resonanceFreq, 1.5, juce::Decibels::decibelsToGain(3.0));
 }
 
-void CabSimulation::generateSyntheticIR()
+void CabSimulation::updateMicBlending()
 {
-    const int irLength = 2048;
-    juce::AudioBuffer<float> impulseResponse(2, irLength);
-    impulseResponse.clear();
+}
+
+void CabSimulation::generateHighQualityIR()
+{
+    int irLength = static_cast<int>(sampleRate * 0.12);
+    closeMicIR.resize(irLength);
+    farMicIR.resize(irLength);
+    roomIR.resize(static_cast<int>(sampleRate * 0.25));
     
-    auto* leftChannel = impulseResponse.getWritePointer(0);
-    auto* rightChannel = impulseResponse.getWritePointer(1);
-    
-    juce::Random random;
+    double baseFreq = isBassMode ? 45.0 : 82.0;
+    double midFreq = isBassMode ? 120.0 : 280.0;
+    double highFreq = isBassMode ? 650.0 : 1200.0;
+    double resonantFreq = isBassMode ? 180.0 : 350.0;
+    double presenceFreq = isBassMode ? 800.0 : 2500.0;
     
     for (int i = 0; i < irLength; ++i)
     {
-        float t = (float)i / (float)irLength;
-        float envelope = std::exp(-t * 8.0f);
+        double t = static_cast<double>(i) / sampleRate;
+        double envelope = std::exp(-t * 15.0) * (1.0 + 0.3 * std::sin(t * 50.0));
+        double lateEnvelope = std::exp(-t * 10.0);
         
-        float resonantFreq = isBassMode ? 100.0f : 200.0f;
-        float sample = envelope * std::sin(2.0f * juce::MathConstants<float>::pi * resonantFreq * t / sampleRate);
+        double closeMicSignal = 0.0;
+        closeMicSignal += std::sin(2.0 * juce::MathConstants<double>::pi * baseFreq * t) * envelope;
+        closeMicSignal += 0.8 * std::sin(2.0 * juce::MathConstants<double>::pi * midFreq * t) * envelope;
+        closeMicSignal += 0.6 * std::sin(2.0 * juce::MathConstants<double>::pi * highFreq * t) * envelope;
+        closeMicSignal += 0.4 * std::sin(2.0 * juce::MathConstants<double>::pi * resonantFreq * t) * envelope;
+        closeMicSignal += 0.3 * std::sin(2.0 * juce::MathConstants<double>::pi * presenceFreq * t) * envelope;
         
-        sample += envelope * 0.3f * std::sin(2.0f * juce::MathConstants<float>::pi * resonantFreq * 2.0f * t / sampleRate);
-        sample += envelope * 0.1f * std::sin(2.0f * juce::MathConstants<float>::pi * resonantFreq * 3.0f * t / sampleRate);
+        closeMicSignal += 0.1 * std::sin(2.0 * juce::MathConstants<double>::pi * baseFreq * 2.0 * t) * envelope;
+        closeMicSignal += 0.05 * std::sin(2.0 * juce::MathConstants<double>::pi * baseFreq * 3.0 * t) * envelope;
         
-        sample += envelope * 0.05f * (random.nextFloat() * 2.0f - 1.0f);
+        double farMicSignal = closeMicSignal * 0.75;
+        farMicSignal += 0.25 * std::sin(2.0 * juce::MathConstants<double>::pi * baseFreq * 0.85 * t) * lateEnvelope;
+        farMicSignal += 0.15 * std::sin(2.0 * juce::MathConstants<double>::pi * midFreq * 0.9 * t) * lateEnvelope;
         
-        leftChannel[i] = sample;
-        rightChannel[i] = sample * 0.9f;
+        closeMicIR[i] = static_cast<float>(closeMicSignal * 0.8);
+        farMicIR[i] = static_cast<float>(farMicSignal * 0.7);
     }
     
-    convolution.loadImpulseResponse(std::move(impulseResponse), sampleRate, 
-                                   juce::dsp::Convolution::Stereo::yes, 
-                                   juce::dsp::Convolution::Trim::yes, 
-                                   juce::dsp::Convolution::Normalise::yes);
+    for (int i = 0; i < static_cast<int>(roomIR.size()); ++i)
+    {
+        double t = static_cast<double>(i) / sampleRate;
+        double roomEnvelope = std::exp(-t * 4.0);
+        double earlyReflections = 0.0;
+        
+        if (t > 0.01)
+        {
+            earlyReflections += 0.3 * std::sin(2.0 * juce::MathConstants<double>::pi * baseFreq * 0.9 * t) * roomEnvelope;
+            earlyReflections += 0.2 * std::sin(2.0 * juce::MathConstants<double>::pi * midFreq * 0.8 * t) * roomEnvelope;
+        }
+        
+        if (t > 0.02)
+        {
+            earlyReflections += 0.15 * std::sin(2.0 * juce::MathConstants<double>::pi * highFreq * 0.6 * t) * roomEnvelope;
+        }
+        
+        roomIR[i] = static_cast<float>(earlyReflections);
+    }
+    
+    if (!closeMicIR.empty())
+    {
+        closeMicConvolution.loadImpulseResponse(closeMicIR.data(), closeMicIR.size(), 
+                                              juce::dsp::Convolution::Stereo::no, 
+                                              juce::dsp::Convolution::Trim::yes, 
+                                              closeMicIR.size(),
+                                              juce::dsp::Convolution::Normalise::yes);
+    }
+    
+    if (!farMicIR.empty())
+    {
+        farMicConvolution.loadImpulseResponse(farMicIR.data(), farMicIR.size(), 
+                                            juce::dsp::Convolution::Stereo::no, 
+                                            juce::dsp::Convolution::Trim::yes, 
+                                            farMicIR.size(),
+                                            juce::dsp::Convolution::Normalise::yes);
+    }
+    
+    if (!roomIR.empty())
+    {
+        roomConvolution.loadImpulseResponse(roomIR.data(), roomIR.size(), 
+                                          juce::dsp::Convolution::Stereo::no, 
+                                          juce::dsp::Convolution::Trim::yes, 
+                                          roomIR.size(),
+                                          juce::dsp::Convolution::Normalise::yes);
+    }
 }

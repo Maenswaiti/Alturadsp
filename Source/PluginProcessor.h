@@ -53,12 +53,17 @@ public:
     InstrumentType getInstrumentType() const { return currentInstrumentType; }
 
 private:
+    void updateParameters();
+    
     juce::AudioProcessorValueTreeState valueTreeState;
     
     std::unique_ptr<AmpModeling> ampModeling;
     std::unique_ptr<CabSimulation> cabSimulation;
     std::unique_ptr<EffectsChain> effectsChain;
     PresetManager presetManager;
+    
+    juce::dsp::Gain<float> inputGainProcessor;
+    juce::dsp::Gain<float> outputGainProcessor;
     
     InstrumentType currentInstrumentType = Guitar;
     

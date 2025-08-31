@@ -84,6 +84,8 @@ void AlturadspAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = getTotalNumOutputChannels();
 
+    inputGainProcessor.prepare(spec);
+    outputGainProcessor.prepare(spec);
     ampModeling->prepare(spec);
     cabSimulation->prepare(spec);
     effectsChain->prepare(spec);
@@ -91,6 +93,8 @@ void AlturadspAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
 
 void AlturadspAudioProcessor::releaseResources()
 {
+    inputGainProcessor.reset();
+    outputGainProcessor.reset();
     ampModeling->reset();
     cabSimulation->reset();
     effectsChain->reset();
@@ -126,13 +130,70 @@ void AlturadspAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
+    updateParameters();
+
     juce::dsp::AudioBlock<float> block (buffer);
     juce::dsp::ProcessContextReplacing<float> context (block);
 
+    inputGainProcessor.process(context);
     effectsChain->processPreAmp(context);
     ampModeling->process(context);
     cabSimulation->process(context);
     effectsChain->processPostAmp(context);
+    outputGainProcessor.process(context);
+}
+
+void AlturadspAudioProcessor::updateParameters()
+{
+    auto inputGain = valueTreeState.getRawParameterValue("inputGain")->load();
+    auto outputGain = valueTreeState.getRawParameterValue("outputGain")->load();
+    
+    inputGainProcessor.setGainDecibels(inputGain);
+    outputGainProcessor.setGainDecibels(outputGain);
+    
+    auto ampModel = static_cast<AmpModeling::AmpModel>(valueTreeState.getRawParameterValue("ampModel")->load());
+    auto ampGain = valueTreeState.getRawParameterValue("ampGain")->load();
+    auto ampBass = valueTreeState.getRawParameterValue("ampBass")->load();
+    auto ampMid = valueTreeState.getRawParameterValue("ampMid")->load();
+    auto ampTreble = valueTreeState.getRawParameterValue("ampTreble")->load();
+    auto ampPresence = valueTreeState.getRawParameterValue("ampPresence")->load();
+    
+    ampModeling->setAmpModel(ampModel);
+    ampModeling->setGain(ampGain / 10.0f);
+    ampModeling->setBass(ampBass / 10.0f);
+    ampModeling->setMid(ampMid / 10.0f);
+    ampModeling->setTreble(ampTreble / 10.0f);
+    ampModeling->setPresence(ampPresence / 10.0f);
+    
+    auto cabModel = static_cast<CabSimulation::CabModel>(valueTreeState.getRawParameterValue("cabModel")->load());
+    auto micType = static_cast<CabSimulation::MicType>(valueTreeState.getRawParameterValue("micType")->load());
+    auto micDistance = valueTreeState.getRawParameterValue("micDistance")->load();
+    
+    cabSimulation->setCabModel(cabModel);
+    cabSimulation->setMicType(micType);
+    cabSimulation->setMicDistance(micDistance / 10.0f);
+    
+    auto noiseGateEnable = valueTreeState.getRawParameterValue("noiseGateEnable")->load();
+    auto noiseGateThreshold = valueTreeState.getRawParameterValue("noiseGateThreshold")->load();
+    auto compressorEnable = valueTreeState.getRawParameterValue("compressorEnable")->load();
+    auto compressorRatio = valueTreeState.getRawParameterValue("compressorRatio")->load();
+    auto reverbEnable = valueTreeState.getRawParameterValue("reverbEnable")->load();
+    auto reverbSize = valueTreeState.getRawParameterValue("reverbSize")->load();
+    auto reverbDamping = valueTreeState.getRawParameterValue("reverbDamping")->load();
+    auto delayEnable = valueTreeState.getRawParameterValue("delayEnable")->load();
+    auto delayTime = valueTreeState.getRawParameterValue("delayTime")->load();
+    auto delayFeedback = valueTreeState.getRawParameterValue("delayFeedback")->load();
+    
+    effectsChain->setNoiseGateEnabled(noiseGateEnable > 0.5f);
+    effectsChain->setNoiseGateThreshold(noiseGateThreshold);
+    effectsChain->setCompressorEnabled(compressorEnable > 0.5f);
+    effectsChain->setCompressorRatio(compressorRatio);
+    effectsChain->setReverbEnabled(reverbEnable > 0.5f);
+    effectsChain->setReverbSize(reverbSize);
+    effectsChain->setReverbDamping(reverbDamping);
+    effectsChain->setDelayEnabled(delayEnable > 0.5f);
+    effectsChain->setDelayTime(delayTime / 1000.0f);
+    effectsChain->setDelayFeedback(delayFeedback);
 }
 
 bool AlturadspAudioProcessor::hasEditor() const
@@ -220,6 +281,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout AlturadspAudioProcessor::cre
 
     return layout;
 }
+
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
