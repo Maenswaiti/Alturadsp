@@ -4,9 +4,6 @@ project(Alturadsp VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(JUCE REQUIRED)
-
 add_subdirectory(JUCE)
 
 juce_add_plugin(Alturadsp
