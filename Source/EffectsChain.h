@@ -35,6 +35,9 @@ private:
     juce::dsp::Reverb reverb;
     juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> delayLine;
     juce::dsp::Gain<float> delayMix;
+    juce::dsp::Chorus<float> chorus;
+    juce::dsp::Phaser<float> phaser;
+    juce::dsp::LadderFilter<float> vintageFilter;
     
     juce::AudioBuffer<float> delayBuffer;
     
