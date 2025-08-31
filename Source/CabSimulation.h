@@ -35,19 +35,35 @@ public:
     void setCabModel(CabModel model);
     void setMicType(MicType mic);
     void setMicDistance(float distance);
+    void setMicBlend(float blend);
+    void setRoomSize(float size);
 
 private:
-    juce::dsp::Convolution convolution;
+    juce::dsp::Convolution closeMicConvolution;
+    juce::dsp::Convolution farMicConvolution;
+    juce::dsp::Convolution roomConvolution;
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> lowPassFilter;
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> highPassFilter;
-    juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> micColorFilter;
+    juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> resonanceFilter;
+    juce::dsp::Reverb roomReverb;
+    
+    juce::SmoothedValue<float> micBlendSmoothed;
+    juce::SmoothedValue<float> roomSizeSmoothed;
     
     CabModel currentCabModel = Vintage4x12;
     MicType currentMicType = Dynamic57;
     bool isBassMode = false;
+    float micDistance = 0.5f;
+    float micBlend = 0.0f;
+    float roomSize = 0.3f;
     double sampleRate = 44100.0;
+    
+    std::vector<float> closeMicIR;
+    std::vector<float> farMicIR;
+    std::vector<float> roomIR;
     
     void updateFilters();
     void loadImpulseResponse();
-    void generateSyntheticIR();
+    void generateHighQualityIR();
+    void updateMicBlending();
 };

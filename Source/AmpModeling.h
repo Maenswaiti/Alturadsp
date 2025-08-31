@@ -40,14 +40,29 @@ private:
     juce::dsp::WaveShaper<float> tubeDistortion;
     juce::dsp::Gain<float> inputGain;
     juce::dsp::Gain<float> outputGain;
+    juce::dsp::Oversampling<float> oversampling;
+    juce::dsp::LadderFilter<float> ladderFilter;
+    
+    juce::SmoothedValue<float> gainSmoothed;
+    juce::SmoothedValue<float> bassSmoothed;
+    juce::SmoothedValue<float> midSmoothed;
+    juce::SmoothedValue<float> trebleSmoothed;
+    juce::SmoothedValue<float> presenceSmoothed;
     
     AmpModel currentModel = Clean;
     bool isBassMode = false;
     double sampleRate = 44100.0;
     
+    float previousSample = 0.0f;
+    float tubeTemperature = 1.0f;
+    
     void updateFilters();
     void updateDistortion();
     
+    static float advancedTubeWaveShaper(float input, float drive);
+    static float asymmetricTubeWaveShaper(float input, float asymmetry);
+    static float volterraSeriesWaveShaper(float input, float harmonics);
+    static float dynamicTubeCompression(float input, float compression);
     static float tubeWaveShaper(float input);
     static float transistorWaveShaper(float input);
     static float modernWaveShaper(float input);
