@@ -159,7 +159,7 @@ void AlturadspAudioProcessor::updateParameters()
     auto ampPresence = valueTreeState.getRawParameterValue("ampPresence")->load();
     
     ampModeling->setAmpModel(ampModel);
-    ampModeling->setGain(ampGain / 10.0f);
+    ampModeling->setGain(ampGain);
     ampModeling->setBass(ampBass / 10.0f);
     ampModeling->setMid(ampMid / 10.0f);
     ampModeling->setTreble(ampTreble / 10.0f);

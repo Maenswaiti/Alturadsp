@@ -2,7 +2,6 @@
 
 AmpModeling::AmpModeling() : oversampling(2, 2, juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR)
 {
-    tubeDistortion.functionToUse = tubeWaveShaper;
     gainSmoothed.setCurrentAndTargetValue(0.5f);
     bassSmoothed.setCurrentAndTargetValue(0.5f);
     midSmoothed.setCurrentAndTargetValue(0.5f);
@@ -27,7 +26,6 @@ void AmpModeling::prepare(const juce::dsp::ProcessSpec& spec)
     midPeak.prepare(oversampledSpec);
     highShelf.prepare(oversampledSpec);
     presenceFilter.prepare(oversampledSpec);
-    tubeDistortion.prepare(oversampledSpec);
     inputGain.prepare(oversampledSpec);
     outputGain.prepare(oversampledSpec);
     ladderFilter.prepare(oversampledSpec);
@@ -113,7 +111,6 @@ void AmpModeling::reset()
     midPeak.reset();
     highShelf.reset();
     presenceFilter.reset();
-    tubeDistortion.reset();
     inputGain.reset();
     outputGain.reset();
 }
@@ -133,9 +130,9 @@ void AmpModeling::setAmpModel(AmpModel model)
 
 void AmpModeling::setGain(float gain)
 {
-    float clampedGain = juce::jlimit(0.0f, 1.0f, gain);
-    inputGain.setGainDecibels(clampedGain * 12.0f - 6.0f);
-    gainSmoothed.setTargetValue(clampedGain);
+    float clampedGain = juce::jlimit(0.0f, 10.0f, gain);
+    inputGain.setGainDecibels((clampedGain - 5.0f) * 2.4f);
+    gainSmoothed.setTargetValue(clampedGain / 10.0f);
 }
 
 void AmpModeling::setBass(float bass)
@@ -199,27 +196,21 @@ void AmpModeling::updateDistortion()
     switch (currentModel)
     {
         case Clean:
-            tubeDistortion.functionToUse = [](float x) { return x; };
             outputGain.setGainDecibels(0.0f);
             break;
         case Crunch:
-            tubeDistortion.functionToUse = tubeWaveShaper;
             outputGain.setGainDecibels(-6.0f);
             break;
         case Lead:
-            tubeDistortion.functionToUse = tubeWaveShaper;
             outputGain.setGainDecibels(-3.0f);
             break;
         case HighGain:
-            tubeDistortion.functionToUse = modernWaveShaper;
             outputGain.setGainDecibels(-9.0f);
             break;
         case Vintage:
-            tubeDistortion.functionToUse = tubeWaveShaper;
             outputGain.setGainDecibels(-6.0f);
             break;
         case Modern:
-            tubeDistortion.functionToUse = modernWaveShaper;
             outputGain.setGainDecibels(-6.0f);
             break;
     }

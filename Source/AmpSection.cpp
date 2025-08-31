@@ -7,10 +7,18 @@ AmpSection::AmpSection(AlturadspAudioProcessor& processor) : audioProcessor(proc
 
 void AmpSection::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colour(0xff353535));
-    g.setColour(juce::Colours::white);
-    g.setFont(juce::FontOptions(18.0f, juce::Font::bold));
-    g.drawText("AMP MODELING", getLocalBounds().removeFromTop(40), juce::Justification::centred);
+    juce::ColourGradient gradient(juce::Colour(0xff161b22), 0, 0,
+                                 juce::Colour(0xff21262d), 0, getHeight(), false);
+    g.setGradientFill(gradient);
+    g.fillAll();
+    
+    auto headerArea = getLocalBounds().removeFromTop(60);
+    g.setColour(juce::Colour(0xff0d1117).withAlpha(0.6f));
+    g.fillRoundedRectangle(headerArea.reduced(10).toFloat(), 8.0f);
+    
+    g.setColour(juce::Colour(0xfff0f6fc));
+    g.setFont(juce::FontOptions(20.0f, juce::Font::bold));
+    g.drawText("AMP MODELING", headerArea, juce::Justification::centred);
 }
 
 void AmpSection::resized()
@@ -57,11 +65,17 @@ void AmpSection::setupSlider(juce::Slider& slider, juce::Label& label, const juc
 {
     addAndMakeVisible(slider);
     slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 60, 20);
+    slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 70, 25);
+    
+    slider.setColour(juce::Slider::rotarySliderFillColourId, juce::Colour(0xff58a6ff));
+    slider.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff30363d));
+    slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xfff0f6fc));
+    slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff21262d));
     
     addAndMakeVisible(label);
     label.setText(text, juce::dontSendNotification);
     label.attachToComponent(&slider, false);
-    label.setColour(juce::Label::textColourId, juce::Colours::white);
+    label.setColour(juce::Label::textColourId, juce::Colour(0xfff0f6fc));
     label.setJustificationType(juce::Justification::centred);
+    label.setFont(juce::FontOptions(14.0f, juce::Font::bold));
 }

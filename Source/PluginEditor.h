@@ -2,6 +2,7 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "ModernLookAndFeel.h"
 
 class AlturadspAudioProcessorEditor : public juce::AudioProcessorEditor,
                                       public juce::Timer
@@ -28,6 +29,7 @@ private:
     juce::Label instrumentLabel;
     
     juce::Colour backgroundColour;
+    std::unique_ptr<ModernLookAndFeel> modernLookAndFeel;
     
     void setupUI();
     void updateInstrumentType();

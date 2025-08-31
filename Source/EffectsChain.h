@@ -28,6 +28,10 @@ public:
     void setDelayEnabled(bool enabled);
     void setDelayTime(float timeMs);
     void setDelayFeedback(float feedback);
+    
+    void setChorusEnabled(bool enabled);
+    void setPhaserEnabled(bool enabled);
+    void setVintageFilterEnabled(bool enabled);
 
 private:
     juce::dsp::NoiseGate<float> noiseGate;

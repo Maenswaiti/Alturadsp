@@ -37,7 +37,6 @@ private:
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> highShelf;
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> presenceFilter;
     
-    juce::dsp::WaveShaper<float> tubeDistortion;
     juce::dsp::Gain<float> inputGain;
     juce::dsp::Gain<float> outputGain;
     juce::dsp::Oversampling<float> oversampling;

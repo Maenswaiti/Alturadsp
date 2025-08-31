@@ -170,6 +170,21 @@ void EffectsChain::setDelayFeedback(float feedback)
     delayFeedback = feedback;
 }
 
+void EffectsChain::setChorusEnabled(bool enabled)
+{
+    chorusEnabled = enabled;
+}
+
+void EffectsChain::setPhaserEnabled(bool enabled)
+{
+    phaserEnabled = enabled;
+}
+
+void EffectsChain::setVintageFilterEnabled(bool enabled)
+{
+    vintageFilterEnabled = enabled;
+}
+
 void EffectsChain::updateNoiseGate()
 {
     noiseGate.setThreshold(isBassMode ? -50.0f : -40.0f);
