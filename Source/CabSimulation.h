@@ -65,5 +65,8 @@ private:
     void updateFilters();
     void loadImpulseResponse();
     void generateHighQualityIR();
+    void generateNeuralIR();
+    void applyMicCharacteristics(std::vector<float>& ir, MicType micType);
+    void applyCabinetResonance(std::vector<float>& ir, CabModel cabModel);
     void updateMicBlending();
 };
