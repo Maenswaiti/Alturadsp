@@ -157,10 +157,15 @@ void CabSimulation::updateMicBlending()
 
 void CabSimulation::generateHighQualityIR()
 {
-    int irLength = static_cast<int>(sampleRate * 0.12);
+    generateNeuralIR();
+}
+
+void CabSimulation::generateNeuralIR()
+{
+    int irLength = static_cast<int>(sampleRate * 0.15);
     closeMicIR.resize(irLength);
     farMicIR.resize(irLength);
-    roomIR.resize(static_cast<int>(sampleRate * 0.25));
+    roomIR.resize(static_cast<int>(sampleRate * 0.3));
     
     double baseFreq = isBassMode ? 45.0 : 82.0;
     double midFreq = isBassMode ? 120.0 : 280.0;
@@ -237,5 +242,83 @@ void CabSimulation::generateHighQualityIR()
                                           juce::dsp::Convolution::Trim::yes, 
                                           roomIR.size(),
                                           juce::dsp::Convolution::Normalise::yes);
+    }
+    
+    applyMicCharacteristics(closeMicIR, currentMicType);
+    applyCabinetResonance(closeMicIR, currentCabModel);
+}
+
+void CabSimulation::applyMicCharacteristics(std::vector<float>& ir, MicType micType)
+{
+    if (ir.empty()) return;
+    
+    for (size_t i = 0; i < ir.size(); ++i)
+    {
+        double t = static_cast<double>(i) / sampleRate;
+        double micResponse = 1.0;
+        
+        switch (micType)
+        {
+            case Dynamic57:
+                micResponse = 1.0 + 0.3 * std::sin(t * 5000.0 * 2.0 * juce::MathConstants<double>::pi);
+                micResponse *= std::exp(-t * 15000.0 * 0.1);
+                break;
+            case Dynamic421:
+                micResponse = 1.0 + 0.2 * std::sin(t * 200.0 * 2.0 * juce::MathConstants<double>::pi);
+                micResponse += 0.1 * std::sin(t * 3000.0 * 2.0 * juce::MathConstants<double>::pi);
+                break;
+            case Condenser414:
+                micResponse = 1.0 + 0.15 * std::sin(t * 10000.0 * 2.0 * juce::MathConstants<double>::pi);
+                micResponse += 0.1 * std::sin(t * 15000.0 * 2.0 * juce::MathConstants<double>::pi);
+                break;
+            case Ribbon121:
+                micResponse = 1.0 - 0.2 * std::sin(t * 8000.0 * 2.0 * juce::MathConstants<double>::pi);
+                micResponse *= std::exp(-t * 12000.0 * 0.05);
+                break;
+        }
+        
+        ir[i] *= static_cast<float>(micResponse);
+    }
+}
+
+void CabSimulation::applyCabinetResonance(std::vector<float>& ir, CabModel cabModel)
+{
+    if (ir.empty()) return;
+    
+    for (size_t i = 0; i < ir.size(); ++i)
+    {
+        double t = static_cast<double>(i) / sampleRate;
+        double cabinetResponse = 1.0;
+        
+        switch (cabModel)
+        {
+            case Vintage4x12:
+                cabinetResponse = 1.0 + 0.4 * std::sin(t * 100.0 * 2.0 * juce::MathConstants<double>::pi);
+                cabinetResponse += 0.3 * std::sin(t * 2500.0 * 2.0 * juce::MathConstants<double>::pi);
+                cabinetResponse *= std::exp(-t * 8000.0 * 0.1);
+                break;
+            case Modern4x12:
+                cabinetResponse = 1.0 + 0.2 * std::sin(t * 80.0 * 2.0 * juce::MathConstants<double>::pi);
+                cabinetResponse += 0.4 * std::sin(t * 3000.0 * 2.0 * juce::MathConstants<double>::pi);
+                break;
+            case Combo2x12:
+                cabinetResponse = 1.0 + 0.3 * std::sin(t * 120.0 * 2.0 * juce::MathConstants<double>::pi);
+                cabinetResponse += 0.2 * std::sin(t * 2000.0 * 2.0 * juce::MathConstants<double>::pi);
+                break;
+            case Studio1x12:
+                cabinetResponse = 1.0 + 0.25 * std::sin(t * 150.0 * 2.0 * juce::MathConstants<double>::pi);
+                cabinetResponse += 0.3 * std::sin(t * 2800.0 * 2.0 * juce::MathConstants<double>::pi);
+                break;
+            case Bass8x10:
+                cabinetResponse = 1.0 + 0.6 * std::sin(t * 60.0 * 2.0 * juce::MathConstants<double>::pi);
+                cabinetResponse += 0.3 * std::sin(t * 800.0 * 2.0 * juce::MathConstants<double>::pi);
+                break;
+            case Bass4x10:
+                cabinetResponse = 1.0 + 0.4 * std::sin(t * 80.0 * 2.0 * juce::MathConstants<double>::pi);
+                cabinetResponse += 0.4 * std::sin(t * 1200.0 * 2.0 * juce::MathConstants<double>::pi);
+                break;
+        }
+        
+        ir[i] *= static_cast<float>(cabinetResponse);
     }
 }

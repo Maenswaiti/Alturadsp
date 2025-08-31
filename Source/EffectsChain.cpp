@@ -17,8 +17,28 @@ void EffectsChain::prepare(const juce::dsp::ProcessSpec& spec)
     reverb.prepare(spec);
     delayLine.prepare(spec);
     delayMix.prepare(spec);
+    chorus.prepare(spec);
+    phaser.prepare(spec);
+    vintageFilter.prepare(spec);
     
     delayLine.setMaximumDelayInSamples(static_cast<int>(sampleRate * 2.0));
+    
+    chorus.setRate(0.5f);
+    chorus.setDepth(0.3f);
+    chorus.setCentreDelay(7.0f);
+    chorus.setFeedback(0.2f);
+    chorus.setMix(0.5f);
+    
+    phaser.setRate(0.3f);
+    phaser.setDepth(0.4f);
+    phaser.setCentreFrequency(1000.0f);
+    phaser.setFeedback(0.3f);
+    phaser.setMix(0.5f);
+    
+    vintageFilter.setMode(juce::dsp::LadderFilterMode::LPF24);
+    vintageFilter.setCutoffFrequencyHz(2000.0f);
+    vintageFilter.setResonance(0.3f);
+    vintageFilter.setDrive(1.2f);
     
     updateNoiseGate();
     updateCompressor();
@@ -37,6 +57,21 @@ void EffectsChain::processPreAmp(juce::dsp::ProcessContextReplacing<float>& cont
 
 void EffectsChain::processPostAmp(juce::dsp::ProcessContextReplacing<float>& context)
 {
+    if (vintageFilterEnabled)
+    {
+        vintageFilter.process(context);
+    }
+    
+    if (chorusEnabled)
+    {
+        chorus.process(context);
+    }
+    
+    if (phaserEnabled)
+    {
+        phaser.process(context);
+    }
+    
     if (delayEnabled)
     {
         auto& inputBlock = context.getInputBlock();
@@ -51,7 +86,7 @@ void EffectsChain::processPostAmp(juce::dsp::ProcessContextReplacing<float>& con
             {
                 float delayedSample = delayLine.popSample(static_cast<int>(channel));
                 float input = inputSamples[sample];
-                float output = input + delayedSample * 0.5f;
+                float output = input + delayedSample * 0.4f;
                 
                 delayLine.pushSample(static_cast<int>(channel), input + delayedSample * delayFeedback);
                 outputSamples[sample] = output;
@@ -72,6 +107,9 @@ void EffectsChain::reset()
     reverb.reset();
     delayLine.reset();
     delayMix.reset();
+    chorus.reset();
+    phaser.reset();
+    vintageFilter.reset();
 }
 
 void EffectsChain::setInstrumentType(bool isBass)

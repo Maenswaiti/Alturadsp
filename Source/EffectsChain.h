@@ -43,6 +43,9 @@ private:
     bool compressorEnabled = false;
     bool reverbEnabled = false;
     bool delayEnabled = false;
+    bool chorusEnabled = false;
+    bool phaserEnabled = false;
+    bool vintageFilterEnabled = false;
     
     float delayTimeMs = 250.0f;
     float delayFeedback = 0.3f;
