@@ -12,8 +12,6 @@ PresetManager::~PresetManager()
 
 void PresetManager::loadPreset(const Preset& preset)
 {
-    auto currentState = valueTreeState.copyState();
-    
     valueTreeState.replaceState(preset.state);
     
     if (auto* processor = dynamic_cast<juce::AudioProcessor*>(&valueTreeState.processor))
@@ -29,7 +27,6 @@ void PresetManager::loadPreset(const Preset& preset)
                 rangedParam->sendValueChangedMessageToListeners(currentValue);
             }
         }
-        
     }
     
     valueTreeState.state.sendPropertyChangeMessage("presetLoaded");
@@ -285,6 +282,16 @@ PresetManager::Preset PresetManager::createPreset(const juce::String& name, cons
     state.setProperty("delayEnable", delay, nullptr);
     state.setProperty("delayTime", delayTime, nullptr);
     state.setProperty("delayFeedback", delayFeedback, nullptr);
+    
+    state.setProperty("chorusEnable", false, nullptr);
+    state.setProperty("chorusRate", 0.5f, nullptr);
+    state.setProperty("chorusDepth", 0.3f, nullptr);
+    state.setProperty("phaserEnable", false, nullptr);
+    state.setProperty("phaserRate", 0.3f, nullptr);
+    state.setProperty("phaserDepth", 0.4f, nullptr);
+    state.setProperty("vintageFilterEnable", false, nullptr);
+    state.setProperty("filterCutoff", 2000.0f, nullptr);
+    state.setProperty("filterResonance", 0.3f, nullptr);
     
     state.setProperty("chorusEnable", false, nullptr);
     state.setProperty("chorusRate", 0.5f, nullptr);

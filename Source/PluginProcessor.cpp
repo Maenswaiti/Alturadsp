@@ -316,7 +316,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout AlturadspAudioProcessor::cre
         juce::NormalisableRange<float>(100.0f, 10000.0f), 2000.0f));
     layout.add(std::make_unique<juce::AudioParameterFloat>("filterResonance", "Filter Resonance", 
         juce::NormalisableRange<float>(0.0f, 1.0f), 0.3f));
-
     
     return layout;
 }
