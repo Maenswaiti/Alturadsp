@@ -192,8 +192,28 @@ void AlturadspAudioProcessor::updateParameters()
     effectsChain->setReverbSize(reverbSize);
     effectsChain->setReverbDamping(reverbDamping);
     effectsChain->setDelayEnabled(delayEnable > 0.5f);
-    effectsChain->setDelayTime(delayTime / 1000.0f);
+    effectsChain->setDelayTime(delayTime);
     effectsChain->setDelayFeedback(delayFeedback);
+    
+    auto chorusEnable = valueTreeState.getRawParameterValue("chorusEnable")->load();
+    auto chorusRate = valueTreeState.getRawParameterValue("chorusRate")->load();
+    auto chorusDepth = valueTreeState.getRawParameterValue("chorusDepth")->load();
+    auto phaserEnable = valueTreeState.getRawParameterValue("phaserEnable")->load();
+    auto phaserRate = valueTreeState.getRawParameterValue("phaserRate")->load();
+    auto phaserDepth = valueTreeState.getRawParameterValue("phaserDepth")->load();
+    auto vintageFilterEnable = valueTreeState.getRawParameterValue("vintageFilterEnable")->load();
+    auto filterCutoff = valueTreeState.getRawParameterValue("filterCutoff")->load();
+    auto filterResonance = valueTreeState.getRawParameterValue("filterResonance")->load();
+    
+    effectsChain->setChorusEnabled(chorusEnable > 0.5f);
+    effectsChain->setChorusRate(chorusRate);
+    effectsChain->setChorusDepth(chorusDepth);
+    effectsChain->setPhaserEnabled(phaserEnable > 0.5f);
+    effectsChain->setPhaserRate(phaserRate);
+    effectsChain->setPhaserDepth(phaserDepth);
+    effectsChain->setVintageFilterEnabled(vintageFilterEnable > 0.5f);
+    effectsChain->setVintageFilterCutoff(filterCutoff);
+    effectsChain->setVintageFilterResonance(filterResonance);
 }
 
 bool AlturadspAudioProcessor::hasEditor() const
@@ -279,6 +299,24 @@ juce::AudioProcessorValueTreeState::ParameterLayout AlturadspAudioProcessor::cre
     layout.add(std::make_unique<juce::AudioParameterFloat>("delayFeedback", "Delay Feedback", 
         juce::NormalisableRange<float>(0.0f, 0.95f), 0.3f));
 
+    layout.add(std::make_unique<juce::AudioParameterBool>("chorusEnable", "Chorus", false));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("chorusRate", "Chorus Rate", 
+        juce::NormalisableRange<float>(0.1f, 5.0f), 0.5f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("chorusDepth", "Chorus Depth", 
+        juce::NormalisableRange<float>(0.0f, 1.0f), 0.3f));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>("phaserEnable", "Phaser", false));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("phaserRate", "Phaser Rate", 
+        juce::NormalisableRange<float>(0.1f, 5.0f), 0.3f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("phaserDepth", "Phaser Depth", 
+        juce::NormalisableRange<float>(0.0f, 1.0f), 0.4f));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>("vintageFilterEnable", "Vintage Filter", false));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("filterCutoff", "Filter Cutoff", 
+        juce::NormalisableRange<float>(100.0f, 10000.0f), 2000.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("filterResonance", "Filter Resonance", 
+        juce::NormalisableRange<float>(0.0f, 1.0f), 0.3f));
+    
     return layout;
 }
 

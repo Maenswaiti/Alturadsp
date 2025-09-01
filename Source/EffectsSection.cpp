@@ -234,13 +234,13 @@ void EffectsSection::setupEffectModules()
     vintageFilterModule->addControl(&filterCutoffSlider, "Cutoff");
     vintageFilterModule->addControl(&filterResonanceSlider, "Resonance");
     
-    noiseGateAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.getValueTreeState(), "noiseGateEnabled", noiseGateModule->enableButton);
-    compressorAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.getValueTreeState(), "compressorEnabled", compressorModule->enableButton);
-    chorusAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.getValueTreeState(), "chorusEnabled", chorusModule->enableButton);
-    phaserAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.getValueTreeState(), "phaserEnabled", phaserModule->enableButton);
-    delayAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.getValueTreeState(), "delayEnabled", delayModule->enableButton);
-    reverbAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.getValueTreeState(), "reverbEnabled", reverbModule->enableButton);
-    filterAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.getValueTreeState(), "vintageFilterEnabled", vintageFilterModule->enableButton);
+    noiseGateAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.getValueTreeState(), "noiseGateEnable", noiseGateModule->enableButton);
+    compressorAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.getValueTreeState(), "compressorEnable", compressorModule->enableButton);
+    chorusAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.getValueTreeState(), "chorusEnable", chorusModule->enableButton);
+    phaserAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.getValueTreeState(), "phaserEnable", phaserModule->enableButton);
+    delayAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.getValueTreeState(), "delayEnable", delayModule->enableButton);
+    reverbAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.getValueTreeState(), "reverbEnable", reverbModule->enableButton);
+    filterAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.getValueTreeState(), "vintageFilterEnable", vintageFilterModule->enableButton);
     
     thresholdAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.getValueTreeState(), "noiseGateThreshold", noiseGateThresholdSlider);
     ratioAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.getValueTreeState(), "compressorRatio", compressorRatioSlider);
@@ -263,8 +263,8 @@ void EffectsSection::setupSlider(juce::Slider& slider, const juce::String& param
     slider.setRange(min, max);
     slider.setValue(defaultVal);
     
-    slider.setColour(juce::Slider::rotarySliderFillColourId, juce::Colour(0xff58a6ff));
-    slider.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff30363d));
-    slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xfff0f6fc));
-    slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff21262d));
+    slider.setColour(juce::Slider::rotarySliderFillColourId, juce::Colour(0xff007aff));
+    slider.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xffd1d1d6));
+    slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xff1d1d1f));
+    slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colours::white);
 }

@@ -126,6 +126,7 @@ void EffectsChain::setNoiseGateEnabled(bool enabled)
 
 void EffectsChain::setNoiseGateThreshold(float threshold)
 {
+    noiseGateThreshold = threshold;
     updateNoiseGate();
 }
 
@@ -136,6 +137,7 @@ void EffectsChain::setCompressorEnabled(bool enabled)
 
 void EffectsChain::setCompressorRatio(float ratio)
 {
+    compressorRatio = ratio;
     updateCompressor();
 }
 
@@ -146,11 +148,13 @@ void EffectsChain::setReverbEnabled(bool enabled)
 
 void EffectsChain::setReverbSize(float size)
 {
+    reverbSize = size;
     updateReverb();
 }
 
 void EffectsChain::setReverbDamping(float damping)
 {
+    reverbDamping = damping;
     updateReverb();
 }
 
@@ -185,9 +189,45 @@ void EffectsChain::setVintageFilterEnabled(bool enabled)
     vintageFilterEnabled = enabled;
 }
 
+void EffectsChain::setChorusRate(float rate)
+{
+    chorusRate = rate;
+    chorus.setRate(rate);
+}
+
+void EffectsChain::setChorusDepth(float depth)
+{
+    chorusDepth = depth;
+    chorus.setDepth(depth);
+}
+
+void EffectsChain::setPhaserRate(float rate)
+{
+    phaserRate = rate;
+    phaser.setRate(rate);
+}
+
+void EffectsChain::setPhaserDepth(float depth)
+{
+    phaserDepth = depth;
+    phaser.setDepth(depth);
+}
+
+void EffectsChain::setVintageFilterCutoff(float cutoff)
+{
+    filterCutoff = cutoff;
+    vintageFilter.setCutoffFrequencyHz(cutoff);
+}
+
+void EffectsChain::setVintageFilterResonance(float resonance)
+{
+    filterResonance = resonance;
+    vintageFilter.setResonance(resonance);
+}
+
 void EffectsChain::updateNoiseGate()
 {
-    noiseGate.setThreshold(isBassMode ? -50.0f : -40.0f);
+    noiseGate.setThreshold(noiseGateThreshold);
     noiseGate.setRatio(10.0f);
     noiseGate.setAttack(1.0f);
     noiseGate.setRelease(100.0f);
@@ -196,7 +236,7 @@ void EffectsChain::updateNoiseGate()
 void EffectsChain::updateCompressor()
 {
     compressor.setThreshold(-12.0f);
-    compressor.setRatio(4.0f);
+    compressor.setRatio(compressorRatio);
     compressor.setAttack(5.0f);
     compressor.setRelease(100.0f);
 }
@@ -204,8 +244,8 @@ void EffectsChain::updateCompressor()
 void EffectsChain::updateReverb()
 {
     juce::Reverb::Parameters reverbParams;
-    reverbParams.roomSize = 0.5f;
-    reverbParams.damping = 0.5f;
+    reverbParams.roomSize = reverbSize;
+    reverbParams.damping = reverbDamping;
     reverbParams.wetLevel = 0.3f;
     reverbParams.dryLevel = 0.7f;
     reverbParams.width = 1.0f;

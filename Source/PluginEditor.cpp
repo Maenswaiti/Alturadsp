@@ -23,28 +23,29 @@ AlturadspAudioProcessorEditor::~AlturadspAudioProcessorEditor()
 {
     setLookAndFeel(nullptr);
     stopTimer();
+    removeAllChildren();
 }
 
 void AlturadspAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    juce::ColourGradient gradient(juce::Colour(0xff1a1a1a), 0, 0,
-                                 juce::Colour(0xff2d2d2d), 0, getHeight(), false);
+    juce::ColourGradient gradient(juce::Colour(0xfff5f5f7), 0, 0,
+                                 juce::Colour(0xffe5e5e7), 0, getHeight(), false);
     g.setGradientFill(gradient);
     g.fillAll();
     
     auto headerArea = getLocalBounds().removeFromTop(80);
-    g.setColour(juce::Colour(0xff0d1117).withAlpha(0.8f));
-    g.fillRoundedRectangle(headerArea.toFloat(), 12.0f);
+    g.setColour(juce::Colours::white.withAlpha(0.9f));
+    g.fillRoundedRectangle(headerArea.toFloat(), 8.0f);
     
-    g.setColour(juce::Colours::black.withAlpha(0.3f));
-    g.fillRoundedRectangle(headerArea.translated(0, 2).toFloat(), 12.0f);
+    g.setColour(juce::Colours::black.withAlpha(0.1f));
+    g.fillRoundedRectangle(headerArea.translated(0, 1).toFloat(), 8.0f);
     
-    g.setColour(juce::Colour(0xfff0f6fc));
-    g.setFont(juce::FontOptions(32.0f, juce::Font::bold));
+    g.setColour(juce::Colour(0xff1d1d1f));
+    g.setFont(juce::FontOptions(28.0f, juce::Font::plain));
     g.drawText("ALTURADSP", headerArea, juce::Justification::centred);
     
-    g.setColour(juce::Colour(0xff58a6ff));
-    g.fillRect(headerArea.removeFromBottom(3));
+    g.setColour(juce::Colour(0xff007aff));
+    g.fillRect(headerArea.removeFromBottom(2));
 }
 
 void AlturadspAudioProcessorEditor::resized()

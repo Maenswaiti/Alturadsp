@@ -67,15 +67,15 @@ void AmpSection::setupSlider(juce::Slider& slider, juce::Label& label, const juc
     slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 70, 25);
     
-    slider.setColour(juce::Slider::rotarySliderFillColourId, juce::Colour(0xff58a6ff));
-    slider.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff30363d));
-    slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xfff0f6fc));
-    slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff21262d));
+    slider.setColour(juce::Slider::rotarySliderFillColourId, juce::Colour(0xff007aff));
+    slider.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xffd1d1d6));
+    slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xff1d1d1f));
+    slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colours::white);
     
     addAndMakeVisible(label);
     label.setText(text, juce::dontSendNotification);
     label.attachToComponent(&slider, false);
-    label.setColour(juce::Label::textColourId, juce::Colour(0xfff0f6fc));
+    label.setColour(juce::Label::textColourId, juce::Colour(0xff1d1d1f));
     label.setJustificationType(juce::Justification::centred);
     label.setFont(juce::FontOptions(14.0f, juce::Font::bold));
 }

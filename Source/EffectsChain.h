@@ -30,8 +30,16 @@ public:
     void setDelayFeedback(float feedback);
     
     void setChorusEnabled(bool enabled);
+    void setChorusRate(float rate);
+    void setChorusDepth(float depth);
+    
     void setPhaserEnabled(bool enabled);
+    void setPhaserRate(float rate);
+    void setPhaserDepth(float depth);
+    
     void setVintageFilterEnabled(bool enabled);
+    void setVintageFilterCutoff(float cutoff);
+    void setVintageFilterResonance(float resonance);
 
 private:
     juce::dsp::NoiseGate<float> noiseGate;
@@ -57,6 +65,17 @@ private:
     float delayTimeMs = 250.0f;
     float delayFeedback = 0.3f;
     double sampleRate = 44100.0;
+    
+    float noiseGateThreshold = -40.0f;
+    float compressorRatio = 4.0f;
+    float reverbSize = 0.5f;
+    float reverbDamping = 0.5f;
+    float chorusRate = 0.5f;
+    float chorusDepth = 0.3f;
+    float phaserRate = 0.3f;
+    float phaserDepth = 0.4f;
+    float filterCutoff = 2000.0f;
+    float filterResonance = 0.3f;
     
     void updateNoiseGate();
     void updateCompressor();
