@@ -65,32 +65,50 @@ void AmpModeling::process(juce::dsp::ProcessContextReplacing<float>& context)
             switch (currentModel)
             {
                 case Clean:
-                    output = advancedTubeWaveShaper(input * drive * 0.3f, 0.1f);
+                {
+                    output = advancedTubeWaveShaper(input * drive * 0.4f, 0.15f);
+                    output += 0.05f * volterraSeriesWaveShaper(output, 0.1f);
                     break;
+                }
                 case Crunch:
-                    output = asymmetricTubeWaveShaper(input * drive * 0.8f, 0.3f);
-                    output = dynamicTubeCompression(output, 0.2f);
+                {
+                    output = asymmetricTubeWaveShaper(input * drive * 0.9f, 0.35f);
+                    output = dynamicTubeCompression(output, 0.25f);
+                    output += 0.1f * advancedTubeWaveShaper(output * 0.5f, 0.2f);
                     break;
+                }
                 case Lead:
-                    output = volterraSeriesWaveShaper(input * drive * 1.2f, 0.4f);
-                    output = dynamicTubeCompression(output, 0.4f);
+                {
+                    output = volterraSeriesWaveShaper(input * drive * 1.3f, 0.45f);
+                    output = dynamicTubeCompression(output, 0.45f);
+                    output = asymmetricTubeWaveShaper(output, 0.2f);
                     break;
+                }
                 case HighGain:
-                    output = asymmetricTubeWaveShaper(input * drive * 1.8f, 0.6f);
-                    output = volterraSeriesWaveShaper(output, 0.3f);
-                    output = dynamicTubeCompression(output, 0.6f);
+                {
+                    float stage1 = asymmetricTubeWaveShaper(input * drive * 1.9f, 0.65f);
+                    float stage2 = volterraSeriesWaveShaper(stage1, 0.35f);
+                    output = dynamicTubeCompression(stage2, 0.65f);
+                    output += 0.05f * std::sin(stage1 * 25.0f) * std::exp(-std::abs(stage1) * 2.0f);
                     break;
+                }
                 case Vintage:
-                    output = advancedTubeWaveShaper(input * drive * 0.6f, 0.8f);
-                    output = dynamicTubeCompression(output, 0.3f);
-                    tubeTemperature = juce::jlimit(0.5f, 1.5f, tubeTemperature + (std::abs(output) - 0.5f) * 0.001f);
+                {
+                    output = advancedTubeWaveShaper(input * drive * 0.7f, 0.85f);
+                    output = dynamicTubeCompression(output, 0.35f);
+                    tubeTemperature = juce::jlimit(0.5f, 1.5f, tubeTemperature + (std::abs(output) - 0.5f) * 0.002f);
                     output *= tubeTemperature;
+                    output += 0.08f * std::sin(output * 15.0f) * std::exp(-std::abs(output) * 3.0f);
                     break;
+                }
                 case Modern:
-                    output = volterraSeriesWaveShaper(input * drive * 1.5f, 0.5f);
-                    output = asymmetricTubeWaveShaper(output, 0.4f);
-                    output = dynamicTubeCompression(output, 0.5f);
+                {
+                    float preStage = volterraSeriesWaveShaper(input * drive * 1.6f, 0.55f);
+                    output = asymmetricTubeWaveShaper(preStage, 0.45f);
+                    output = dynamicTubeCompression(output, 0.55f);
+                    output *= (1.0f - 0.05f * std::abs(output));
                     break;
+                }
             }
             
             channelData[sample] = output;

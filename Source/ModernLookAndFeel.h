@@ -16,11 +16,28 @@ public:
         setColour(juce::ToggleButton::tickColourId, juce::Colour(0xff007aff));
         setColour(juce::ToggleButton::tickDisabledColourId, juce::Colour(0xffd1d1d6));
         
+        // Enhanced tab styling for better visibility
         setColour(juce::TabbedComponent::backgroundColourId, juce::Colour(0xfff5f5f7));
         setColour(juce::TabbedComponent::outlineColourId, juce::Colour(0xffd1d1d6));
         setColour(juce::TabbedButtonBar::tabOutlineColourId, juce::Colour(0xffd1d1d6));
         setColour(juce::TabbedButtonBar::frontOutlineColourId, juce::Colour(0xff007aff));
         setColour(juce::TabbedButtonBar::tabTextColourId, juce::Colour(0xff1d1d1f));
+        setColour(juce::TabbedButtonBar::frontTextColourId, juce::Colour(0xff007aff));
+        
+        // Additional component styling for comprehensive Apple design
+        setColour(juce::TextButton::buttonColourId, juce::Colours::white);
+        setColour(juce::TextButton::textColourOffId, juce::Colour(0xff1d1d1f));
+        setColour(juce::TextButton::textColourOnId, juce::Colours::white);
+        setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xff007aff));
+        
+        setColour(juce::Slider::rotarySliderFillColourId, juce::Colour(0xff007aff));
+        setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xffd1d1d6));
+        setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xff1d1d1f));
+        setColour(juce::Slider::textBoxBackgroundColourId, juce::Colours::white);
+        setColour(juce::Slider::textBoxOutlineColourId, juce::Colour(0xffd1d1d6));
+        
+        setColour(juce::Label::textColourId, juce::Colour(0xff1d1d1f));
+        setColour(juce::Label::backgroundColourId, juce::Colours::transparentBlack);
     }
     
     void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,

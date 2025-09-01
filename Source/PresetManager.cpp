@@ -12,9 +12,27 @@ PresetManager::~PresetManager()
 
 void PresetManager::loadPreset(const Preset& preset)
 {
+    auto currentState = valueTreeState.copyState();
+    
     valueTreeState.replaceState(preset.state);
+    
     if (auto* processor = dynamic_cast<juce::AudioProcessor*>(&valueTreeState.processor))
+    {
         processor->updateHostDisplay();
+        
+        for (auto* param : processor->getParameters())
+        {
+            if (auto* rangedParam = dynamic_cast<juce::RangedAudioParameter*>(param))
+            {
+                float currentValue = rangedParam->getValue();
+                rangedParam->setValueNotifyingHost(currentValue);
+                rangedParam->sendValueChangedMessageToListeners(currentValue);
+            }
+        }
+        
+    }
+    
+    valueTreeState.state.sendPropertyChangeMessage("presetLoaded");
 }
 
 void PresetManager::savePreset(const juce::String& name, const juce::String& category, const juce::String& description, bool isBass)
@@ -58,11 +76,29 @@ void PresetManager::createDefaultPresets()
 
 void PresetManager::createGuitarPresets()
 {
-    presets.push_back(createPreset("Clean Jazz", "Clean", "Warm clean tone perfect for jazz", false,
-                                  0, 2.0f, 6.0f, 5.0f, 4.0f, 3.0f, 0, 0, 2.0f));
+    presets.push_back(createPreset("Neural Clean", "Clean", "Crystal clear Neural DSP style clean tone", false,
+                                  0, 3.8f, 6.2f, 5.8f, 6.8f, 4.2f, 0, 0, 1.8f, false, -42.0f, true, 2.8f, true, 0.35f, 0.45f));
     
-    presets.push_back(createPreset("Sparkle Clean", "Clean", "Bright clean with presence", false,
-                                  0, 1.5f, 4.0f, 5.0f, 7.0f, 6.0f, 1, 2, 1.5f));
+    presets.push_back(createPreset("Vintage Warmth", "Vintage", "Classic tube warmth with character", false,
+                                  4, 6.8f, 6.8f, 7.2f, 6.2f, 5.8f, 0, 1, 2.2f, false, -38.0f, false, 4.2f, true, 0.42f, 0.32f));
+    
+    presets.push_back(createPreset("Modern Crunch", "Crunch", "Tight modern crunch tone", false,
+                                  1, 7.2f, 6.5f, 6.8f, 7.2f, 6.5f, 1, 0, 1.5f, true, -36.0f, true, 3.8f, true, 0.38f, 0.28f));
+    
+    presets.push_back(createPreset("Soaring Lead", "Lead", "Singing sustain lead tone", false,
+                                  2, 8.2f, 5.8f, 6.8f, 7.5f, 7.0f, 1, 0, 1.2f, true, -34.0f, true, 3.2f, false, 0.0f, 0.0f, true, 0.45f, 0.35f));
+    
+    presets.push_back(createPreset("Crushing High Gain", "High Gain", "Modern metal rhythm tone", false,
+                                  3, 9.2f, 7.5f, 6.2f, 8.0f, 6.8f, 1, 0, 0.8f, true, -32.0f, true, 4.5f));
+    
+    presets.push_back(createPreset("Modern Precision", "Modern", "Tight modern high-gain", false,
+                                  5, 8.8f, 7.2f, 6.5f, 7.8f, 6.5f, 1, 0, 1.0f, true, -33.0f, true, 4.2f));
+    
+    presets.push_back(createPreset("Ambient Shimmer", "Clean", "Ethereal ambient clean", false,
+                                  0, 4.2f, 6.5f, 6.0f, 7.2f, 5.0f, 0, 2, 2.5f, false, -45.0f, true, 2.0f, true, 0.5f, 0.6f));
+    
+    presets.push_back(createPreset("Vintage Chorus", "Crunch", "Classic 80s chorus crunch", false,
+                                  1, 6.5f, 6.8f, 7.0f, 6.5f, 5.5f, 0, 1, 2.0f, false, -40.0f, false, 4.0f, true, 0.6f, 0.5f));
     
     presets.push_back(createPreset("Country Twang", "Clean", "Classic country clean tone", false,
                                   0, 3.0f, 5.0f, 4.0f, 8.0f, 7.0f, 2, 0, 2.5f));

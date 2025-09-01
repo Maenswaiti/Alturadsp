@@ -162,31 +162,91 @@ void CabSimulation::generateHighQualityIR()
 
 void CabSimulation::generateNeuralIR()
 {
-    int irLength = static_cast<int>(sampleRate * 0.25);
+    int irLength = static_cast<int>(sampleRate * 0.6); // Longer for better quality
     closeMicIR.resize(irLength);
     farMicIR.resize(irLength);
-    roomIR.resize(static_cast<int>(sampleRate * 0.5));
+    roomIR.resize(static_cast<int>(sampleRate * 1.2)); // Extended room response
     
-    double baseFreq = isBassMode ? 45.0 : 82.0;
-    double resonantFreqs[] = {baseFreq, baseFreq * 2.3, baseFreq * 4.7, baseFreq * 7.1};
+    double baseFreq = isBassMode ? 35.0 : 75.0; // More accurate fundamental frequencies
+    
+    std::vector<double> resonantFreqs;
+    std::vector<double> resonantAmplitudes;
+    std::vector<double> resonantDecays;
+    
+    switch (currentCabModel)
+    {
+        case Vintage4x12:
+            resonantFreqs = {baseFreq, baseFreq * 2.1, baseFreq * 3.8, baseFreq * 6.2, baseFreq * 9.5, baseFreq * 13.2};
+            resonantAmplitudes = {1.0, 0.7, 0.5, 0.3, 0.2, 0.1};
+            resonantDecays = {6.0, 8.0, 10.0, 12.0, 15.0, 18.0};
+            break;
+        case Modern4x12:
+            resonantFreqs = {baseFreq, baseFreq * 2.3, baseFreq * 4.1, baseFreq * 6.8, baseFreq * 10.2, baseFreq * 14.5};
+            resonantAmplitudes = {1.0, 0.8, 0.6, 0.4, 0.25, 0.12};
+            resonantDecays = {7.0, 9.0, 11.0, 13.0, 16.0, 20.0};
+            break;
+        case Combo2x12:
+            resonantFreqs = {baseFreq * 1.2, baseFreq * 2.5, baseFreq * 4.3, baseFreq * 7.1, baseFreq * 11.0};
+            resonantAmplitudes = {1.0, 0.6, 0.4, 0.25, 0.15};
+            resonantDecays = {5.0, 7.0, 9.0, 11.0, 14.0};
+            break;
+        case Studio1x12:
+            resonantFreqs = {baseFreq * 1.1, baseFreq * 2.4, baseFreq * 4.2, baseFreq * 6.9, baseFreq * 10.5};
+            resonantAmplitudes = {1.0, 0.65, 0.45, 0.28, 0.18};
+            resonantDecays = {5.5, 7.5, 9.5, 11.5, 14.5};
+            break;
+        case Bass8x10:
+            resonantFreqs = {baseFreq, baseFreq * 1.8, baseFreq * 3.2, baseFreq * 5.1, baseFreq * 7.8};
+            resonantAmplitudes = {1.0, 0.9, 0.7, 0.5, 0.3};
+            resonantDecays = {8.0, 10.0, 12.0, 14.0, 17.0};
+            break;
+        case Bass4x10:
+            resonantFreqs = {baseFreq, baseFreq * 1.9, baseFreq * 3.4, baseFreq * 5.3, baseFreq * 8.1};
+            resonantAmplitudes = {1.0, 0.85, 0.65, 0.45, 0.25};
+            resonantDecays = {7.5, 9.5, 11.5, 13.5, 16.5};
+            break;
+        default:
+            resonantFreqs = {baseFreq, baseFreq * 2.2, baseFreq * 4.0, baseFreq * 6.5, baseFreq * 9.8};
+            resonantAmplitudes = {1.0, 0.7, 0.5, 0.3, 0.2};
+            resonantDecays = {6.0, 8.0, 10.0, 12.0, 15.0};
+            break;
+    }
+    
     double cabinetResonance = getCabinetResonanceFreq(currentCabModel);
     
     for (int i = 0; i < irLength; ++i)
     {
         double t = static_cast<double>(i) / sampleRate;
-        double envelope = std::exp(-t * 12.0) * (1.0 + 0.2 * std::sin(t * cabinetResonance));
-        
         double signal = 0.0;
-        for (int h = 0; h < 4; ++h)
+        
+        double primaryEnvelope = std::exp(-t * 5.0) * (1.0 + 0.4 * std::sin(t * cabinetResonance * 2.0 * juce::MathConstants<double>::pi));
+        
+        for (size_t h = 0; h < resonantFreqs.size(); ++h)
         {
             double harmonic = std::sin(2.0 * juce::MathConstants<double>::pi * resonantFreqs[h] * t);
-            signal += harmonic * envelope * (1.0 / (h + 1));
+            double harmonicEnvelope = std::exp(-t * resonantDecays[h]);
+            signal += harmonic * harmonicEnvelope * resonantAmplitudes[h] * primaryEnvelope;
         }
         
         signal *= getCabinetColorationFactor(currentCabModel, t);
         
+        double woodResonance = 0.15 * std::sin(2.0 * juce::MathConstants<double>::pi * (baseFreq * 0.7) * t) * std::exp(-t * 4.0);
+        double airMovement = 0.08 * std::sin(2.0 * juce::MathConstants<double>::pi * (baseFreq * 1.3) * t) * std::exp(-t * 8.0);
+        double speakerCone = 0.12 * std::sin(2.0 * juce::MathConstants<double>::pi * (baseFreq * 2.8) * t) * std::exp(-t * 12.0);
+        
+        double portResonance = 0.0;
+        if (currentCabModel == Modern4x12 || currentCabModel == Combo2x12)
+        {
+            portResonance = 0.1 * std::sin(2.0 * juce::MathConstants<double>::pi * (baseFreq * 0.9) * t) * std::exp(-t * 6.0);
+        }
+        
+        signal += woodResonance + airMovement + speakerCone + portResonance;
+        
         closeMicIR[i] = static_cast<float>(signal * 0.9);
-        farMicIR[i] = static_cast<float>(signal * 0.7 * (1.0 + 0.1 * std::sin(t * 30.0)));
+        
+        double roomInteraction = 1.0 + 0.2 * std::sin(t * 18.0 * 2.0 * juce::MathConstants<double>::pi);
+        double phaseShift = 0.95; // Slight phase difference from distance
+        farMicIR[i] = static_cast<float>(signal * 0.7 * roomInteraction * phaseShift);
     }
     
     for (int i = 0; i < static_cast<int>(roomIR.size()); ++i)

@@ -41,7 +41,7 @@ void AlturadspAudioProcessorEditor::paint (juce::Graphics& g)
     
     g.setColour(juce::Colour(0xff1d1d1f));
     g.setFont(juce::FontOptions(32.0f, juce::Font::FontStyleFlags::plain));
-    g.drawText("ALTURADSP", headerArea, juce::Justification::centred);
+    g.drawText("ALTURADSP", headerArea.reduced(0, 20), juce::Justification::centred);
     
     auto accentArea = headerArea.removeFromBottom(4).reduced(20, 0);
     juce::ColourGradient accentGradient(juce::Colour(0xff007aff), accentArea.getX(), 0,
@@ -51,7 +51,8 @@ void AlturadspAudioProcessorEditor::paint (juce::Graphics& g)
     
     g.setColour(juce::Colour(0xff8e8e93));
     g.setFont(juce::FontOptions(12.0f, juce::Font::FontStyleFlags::plain));
-    g.drawText("Professional Edition", headerArea.removeFromBottom(20), juce::Justification::centred);
+    auto versionArea = headerArea.removeFromBottom(20);
+    g.drawText("Professional Edition", versionArea, juce::Justification::centred);
 }
 
 void AlturadspAudioProcessorEditor::resized()
