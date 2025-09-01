@@ -11,8 +11,6 @@ AlturadspAudioProcessorEditor::AlturadspAudioProcessorEditor (AlturadspAudioProc
     modernLookAndFeel = std::make_unique<ModernLookAndFeel>();
     setLookAndFeel(modernLookAndFeel.get());
     
-    backgroundColour = juce::Colour(0xff1a1a1a);
-    
     setupUI();
     
     setSize(900, 700);

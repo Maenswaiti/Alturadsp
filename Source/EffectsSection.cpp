@@ -17,14 +17,14 @@ void EffectModule::paint(juce::Graphics& g)
 {
     auto bounds = getLocalBounds().toFloat();
     
-    juce::ColourGradient gradient(effectEnabled ? juce::Colour(0xff1f6feb) : juce::Colour(0xff21262d), 
+    juce::ColourGradient gradient(effectEnabled ? juce::Colour(0xff007aff) : juce::Colour(0xfff5f5f7), 
                                  bounds.getX(), bounds.getY(),
-                                 effectEnabled ? juce::Colour(0xff0969da) : juce::Colour(0xff161b22), 
+                                 effectEnabled ? juce::Colour(0xff0051d5) : juce::Colour(0xffe5e5e7), 
                                  bounds.getX(), bounds.getBottom(), false);
     g.setGradientFill(gradient);
     g.fillRoundedRectangle(bounds, 8.0f);
     
-    g.setColour(effectEnabled ? juce::Colour(0xff58a6ff) : juce::Colour(0xff30363d));
+    g.setColour(effectEnabled ? juce::Colour(0xff007aff) : juce::Colour(0xffd1d1d6));
     g.drawRoundedRectangle(bounds, 8.0f, 2.0f);
     
     if (effectEnabled)
@@ -36,17 +36,18 @@ void EffectModule::paint(juce::Graphics& g)
     auto iconBounds = bounds.removeFromTop(40).reduced(8);
     drawEffectIcon(g, iconBounds);
     
-    g.setColour(effectEnabled ? juce::Colour(0xfff0f6fc) : juce::Colour(0xff7d8590));
+    g.setColour(effectEnabled ? juce::Colours::white : juce::Colour(0xff1d1d1f));
     g.setFont(juce::FontOptions(14.0f, juce::Font::bold));
     g.drawText(effectName, bounds.removeFromTop(20), juce::Justification::centred);
     
     g.setFont(juce::FontOptions(11.0f));
+    g.setColour(effectEnabled ? juce::Colours::white.withAlpha(0.8f) : juce::Colour(0xff8e8e93));
     g.drawText(effectDescription, bounds.removeFromTop(15), juce::Justification::centred);
 }
 
 void EffectModule::drawEffectIcon(juce::Graphics& g, juce::Rectangle<float> bounds)
 {
-    g.setColour(effectEnabled ? juce::Colour(0xff58a6ff) : juce::Colour(0xff7d8590));
+    g.setColour(effectEnabled ? juce::Colours::white : juce::Colour(0xff007aff));
     
     if (effectName == "Noise Gate")
     {
