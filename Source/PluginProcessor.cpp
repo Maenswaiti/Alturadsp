@@ -316,6 +316,24 @@ juce::AudioProcessorValueTreeState::ParameterLayout AlturadspAudioProcessor::cre
         juce::NormalisableRange<float>(100.0f, 10000.0f), 2000.0f));
     layout.add(std::make_unique<juce::AudioParameterFloat>("filterResonance", "Filter Resonance", 
         juce::NormalisableRange<float>(0.0f, 1.0f), 0.3f));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>("chorusEnable", "Chorus", false));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("chorusRate", "Chorus Rate", 
+        juce::NormalisableRange<float>(0.1f, 5.0f), 0.5f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("chorusDepth", "Chorus Depth", 
+        juce::NormalisableRange<float>(0.0f, 1.0f), 0.3f));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>("phaserEnable", "Phaser", false));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("phaserRate", "Phaser Rate", 
+        juce::NormalisableRange<float>(0.1f, 5.0f), 0.3f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("phaserDepth", "Phaser Depth", 
+        juce::NormalisableRange<float>(0.0f, 1.0f), 0.4f));
+
+    layout.add(std::make_unique<juce::AudioParameterBool>("vintageFilterEnable", "Vintage Filter", false));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("filterCutoff", "Filter Cutoff", 
+        juce::NormalisableRange<float>(100.0f, 10000.0f), 2000.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>("filterResonance", "Filter Resonance", 
+        juce::NormalisableRange<float>(0.0f, 1.0f), 0.3f));
     
     return layout;
 }
