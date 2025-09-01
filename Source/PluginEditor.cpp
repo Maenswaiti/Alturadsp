@@ -28,24 +28,32 @@ AlturadspAudioProcessorEditor::~AlturadspAudioProcessorEditor()
 
 void AlturadspAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    juce::ColourGradient gradient(juce::Colour(0xfff5f5f7), 0, 0,
-                                 juce::Colour(0xffe5e5e7), 0, getHeight(), false);
+    juce::ColourGradient gradient(juce::Colour(0xfff8f9fa), 0, 0,
+                                 juce::Colour(0xfff1f3f4), 0, getHeight(), false);
     g.setGradientFill(gradient);
     g.fillAll();
     
-    auto headerArea = getLocalBounds().removeFromTop(80);
-    g.setColour(juce::Colours::white.withAlpha(0.9f));
-    g.fillRoundedRectangle(headerArea.toFloat(), 8.0f);
+    auto headerArea = getLocalBounds().removeFromTop(90);
     
-    g.setColour(juce::Colours::black.withAlpha(0.1f));
-    g.fillRoundedRectangle(headerArea.translated(0, 1).toFloat(), 8.0f);
+    g.setColour(juce::Colours::white.withAlpha(0.95f));
+    g.fillRoundedRectangle(headerArea.reduced(8).toFloat(), 12.0f);
+    
+    g.setColour(juce::Colours::black.withAlpha(0.08f));
+    g.fillRoundedRectangle(headerArea.reduced(8).translated(0, 2).toFloat(), 12.0f);
     
     g.setColour(juce::Colour(0xff1d1d1f));
-    g.setFont(juce::FontOptions(28.0f, juce::Font::plain));
+    g.setFont(juce::FontOptions(32.0f, juce::Font::FontStyleFlags::plain));
     g.drawText("ALTURADSP", headerArea, juce::Justification::centred);
     
-    g.setColour(juce::Colour(0xff007aff));
-    g.fillRect(headerArea.removeFromBottom(2));
+    auto accentArea = headerArea.removeFromBottom(4).reduced(20, 0);
+    juce::ColourGradient accentGradient(juce::Colour(0xff007aff), accentArea.getX(), 0,
+                                       juce::Colour(0xff5ac8fa), accentArea.getRight(), 0, false);
+    g.setGradientFill(accentGradient);
+    g.fillRoundedRectangle(accentArea.toFloat(), 2.0f);
+    
+    g.setColour(juce::Colour(0xff8e8e93));
+    g.setFont(juce::FontOptions(12.0f, juce::Font::FontStyleFlags::plain));
+    g.drawText("Professional Edition", headerArea.removeFromBottom(20), juce::Justification::centred);
 }
 
 void AlturadspAudioProcessorEditor::resized()
@@ -75,10 +83,10 @@ void AlturadspAudioProcessorEditor::setupUI()
     effectsSection = std::make_unique<EffectsSection>(audioProcessor);
     presetSection = std::make_unique<PresetSection>(audioProcessor);
     
-    mainTabs.addTab("Amp", juce::Colour(0xff21262d), ampSection.get(), false);
-    mainTabs.addTab("Cabinet", juce::Colour(0xff21262d), cabSection.get(), false);
-    mainTabs.addTab("Effects", juce::Colour(0xff21262d), effectsSection.get(), false);
-    mainTabs.addTab("Presets", juce::Colour(0xff21262d), presetSection.get(), false);
+    mainTabs.addTab("Amplifier", juce::Colour(0xfff5f5f7), ampSection.get(), false);
+    mainTabs.addTab("Cabinet", juce::Colour(0xfff5f5f7), cabSection.get(), false);
+    mainTabs.addTab("Effects", juce::Colour(0xfff5f5f7), effectsSection.get(), false);
+    mainTabs.addTab("Presets", juce::Colour(0xfff5f5f7), presetSection.get(), false);
     
     addAndMakeVisible(instrumentSelector);
     instrumentSelector.addItem("Guitar", 1);
@@ -88,7 +96,7 @@ void AlturadspAudioProcessorEditor::setupUI()
     
     addAndMakeVisible(instrumentLabel);
     instrumentLabel.setText("Instrument:", juce::dontSendNotification);
-    instrumentLabel.setColour(juce::Label::textColourId, juce::Colour(0xfff0f6fc));
+    instrumentLabel.setColour(juce::Label::textColourId, juce::Colour(0xff1d1d1f));
     instrumentLabel.setFont(juce::FontOptions(16.0f, juce::Font::bold));
 }
 

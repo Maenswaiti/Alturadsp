@@ -7,17 +7,17 @@ CabSection::CabSection(AlturadspAudioProcessor& processor) : audioProcessor(proc
 
 void CabSection::paint(juce::Graphics& g)
 {
-    juce::ColourGradient gradient(juce::Colour(0xff161b22), 0, 0,
-                                 juce::Colour(0xff21262d), 0, getHeight(), false);
+    juce::ColourGradient gradient(juce::Colour(0xfff5f5f7), 0, 0,
+                                 juce::Colour(0xffe5e5e7), 0, getHeight(), false);
     g.setGradientFill(gradient);
     g.fillAll();
     
     auto headerArea = getLocalBounds().removeFromTop(60);
-    g.setColour(juce::Colour(0xff0d1117).withAlpha(0.6f));
+    g.setColour(juce::Colours::white.withAlpha(0.9f));
     g.fillRoundedRectangle(headerArea.reduced(10).toFloat(), 8.0f);
     
-    g.setColour(juce::Colour(0xfff0f6fc));
-    g.setFont(juce::FontOptions(20.0f, juce::Font::bold));
+    g.setColour(juce::Colour(0xff1d1d1f));
+    g.setFont(juce::FontOptions(20.0f, juce::Font::plain));
     g.drawText("CABINET SIMULATION", headerArea, juce::Justification::centred);
 }
 

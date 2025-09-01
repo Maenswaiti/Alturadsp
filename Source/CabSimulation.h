@@ -67,6 +67,9 @@ private:
     void generateHighQualityIR();
     void generateNeuralIR();
     void applyMicCharacteristics(std::vector<float>& ir, MicType micType);
+    void applyAdvancedMicCharacteristics(std::vector<float>& ir, MicType micType);
     void applyCabinetResonance(std::vector<float>& ir, CabModel cabModel);
     void updateMicBlending();
+    double getCabinetResonanceFreq(CabModel model);
+    double getCabinetColorationFactor(CabModel model, double time);
 };

@@ -13,6 +13,8 @@ PresetManager::~PresetManager()
 void PresetManager::loadPreset(const Preset& preset)
 {
     valueTreeState.replaceState(preset.state);
+    if (auto* processor = dynamic_cast<juce::AudioProcessor*>(&valueTreeState.processor))
+        processor->updateHostDisplay();
 }
 
 void PresetManager::savePreset(const juce::String& name, const juce::String& category, const juce::String& description, bool isBass)
@@ -247,6 +249,16 @@ PresetManager::Preset PresetManager::createPreset(const juce::String& name, cons
     state.setProperty("delayEnable", delay, nullptr);
     state.setProperty("delayTime", delayTime, nullptr);
     state.setProperty("delayFeedback", delayFeedback, nullptr);
+    
+    state.setProperty("chorusEnable", false, nullptr);
+    state.setProperty("chorusRate", 0.5f, nullptr);
+    state.setProperty("chorusDepth", 0.3f, nullptr);
+    state.setProperty("phaserEnable", false, nullptr);
+    state.setProperty("phaserRate", 0.3f, nullptr);
+    state.setProperty("phaserDepth", 0.4f, nullptr);
+    state.setProperty("vintageFilterEnable", false, nullptr);
+    state.setProperty("filterCutoff", 2000.0f, nullptr);
+    state.setProperty("filterResonance", 0.3f, nullptr);
     
     preset.state = state;
     return preset;

@@ -162,39 +162,31 @@ void CabSimulation::generateHighQualityIR()
 
 void CabSimulation::generateNeuralIR()
 {
-    int irLength = static_cast<int>(sampleRate * 0.15);
+    int irLength = static_cast<int>(sampleRate * 0.25);
     closeMicIR.resize(irLength);
     farMicIR.resize(irLength);
-    roomIR.resize(static_cast<int>(sampleRate * 0.3));
+    roomIR.resize(static_cast<int>(sampleRate * 0.5));
     
     double baseFreq = isBassMode ? 45.0 : 82.0;
-    double midFreq = isBassMode ? 120.0 : 280.0;
-    double highFreq = isBassMode ? 650.0 : 1200.0;
-    double resonantFreq = isBassMode ? 180.0 : 350.0;
-    double presenceFreq = isBassMode ? 800.0 : 2500.0;
+    double resonantFreqs[] = {baseFreq, baseFreq * 2.3, baseFreq * 4.7, baseFreq * 7.1};
+    double cabinetResonance = getCabinetResonanceFreq(currentCabModel);
     
     for (int i = 0; i < irLength; ++i)
     {
         double t = static_cast<double>(i) / sampleRate;
-        double envelope = std::exp(-t * 15.0) * (1.0 + 0.3 * std::sin(t * 50.0));
-        double lateEnvelope = std::exp(-t * 10.0);
+        double envelope = std::exp(-t * 12.0) * (1.0 + 0.2 * std::sin(t * cabinetResonance));
         
-        double closeMicSignal = 0.0;
-        closeMicSignal += std::sin(2.0 * juce::MathConstants<double>::pi * baseFreq * t) * envelope;
-        closeMicSignal += 0.8 * std::sin(2.0 * juce::MathConstants<double>::pi * midFreq * t) * envelope;
-        closeMicSignal += 0.6 * std::sin(2.0 * juce::MathConstants<double>::pi * highFreq * t) * envelope;
-        closeMicSignal += 0.4 * std::sin(2.0 * juce::MathConstants<double>::pi * resonantFreq * t) * envelope;
-        closeMicSignal += 0.3 * std::sin(2.0 * juce::MathConstants<double>::pi * presenceFreq * t) * envelope;
+        double signal = 0.0;
+        for (int h = 0; h < 4; ++h)
+        {
+            double harmonic = std::sin(2.0 * juce::MathConstants<double>::pi * resonantFreqs[h] * t);
+            signal += harmonic * envelope * (1.0 / (h + 1));
+        }
         
-        closeMicSignal += 0.1 * std::sin(2.0 * juce::MathConstants<double>::pi * baseFreq * 2.0 * t) * envelope;
-        closeMicSignal += 0.05 * std::sin(2.0 * juce::MathConstants<double>::pi * baseFreq * 3.0 * t) * envelope;
+        signal *= getCabinetColorationFactor(currentCabModel, t);
         
-        double farMicSignal = closeMicSignal * 0.75;
-        farMicSignal += 0.25 * std::sin(2.0 * juce::MathConstants<double>::pi * baseFreq * 0.85 * t) * lateEnvelope;
-        farMicSignal += 0.15 * std::sin(2.0 * juce::MathConstants<double>::pi * midFreq * 0.9 * t) * lateEnvelope;
-        
-        closeMicIR[i] = static_cast<float>(closeMicSignal * 0.8);
-        farMicIR[i] = static_cast<float>(farMicSignal * 0.7);
+        closeMicIR[i] = static_cast<float>(signal * 0.9);
+        farMicIR[i] = static_cast<float>(signal * 0.7 * (1.0 + 0.1 * std::sin(t * 30.0)));
     }
     
     for (int i = 0; i < static_cast<int>(roomIR.size()); ++i)
@@ -202,6 +194,9 @@ void CabSimulation::generateNeuralIR()
         double t = static_cast<double>(i) / sampleRate;
         double roomEnvelope = std::exp(-t * 4.0);
         double earlyReflections = 0.0;
+        
+        double midFreq = baseFreq * 2.5;
+        double highFreq = baseFreq * 4.2;
         
         if (t > 0.01)
         {
@@ -215,15 +210,6 @@ void CabSimulation::generateNeuralIR()
         }
         
         roomIR[i] = static_cast<float>(earlyReflections);
-    }
-    
-    if (!closeMicIR.empty())
-    {
-        closeMicConvolution.loadImpulseResponse(closeMicIR.data(), closeMicIR.size(), 
-                                              juce::dsp::Convolution::Stereo::no, 
-                                              juce::dsp::Convolution::Trim::yes, 
-                                              closeMicIR.size(),
-                                              juce::dsp::Convolution::Normalise::yes);
     }
     
     if (!farMicIR.empty())
@@ -244,8 +230,17 @@ void CabSimulation::generateNeuralIR()
                                           juce::dsp::Convolution::Normalise::yes);
     }
     
-    applyMicCharacteristics(closeMicIR, currentMicType);
+    applyAdvancedMicCharacteristics(closeMicIR, currentMicType);
     applyCabinetResonance(closeMicIR, currentCabModel);
+    
+    if (!closeMicIR.empty())
+    {
+        closeMicConvolution.loadImpulseResponse(closeMicIR.data(), closeMicIR.size(), 
+                                              juce::dsp::Convolution::Stereo::no, 
+                                              juce::dsp::Convolution::Trim::yes, 
+                                              closeMicIR.size(),
+                                              juce::dsp::Convolution::Normalise::yes);
+    }
 }
 
 void CabSimulation::applyMicCharacteristics(std::vector<float>& ir, MicType micType)
@@ -320,5 +315,77 @@ void CabSimulation::applyCabinetResonance(std::vector<float>& ir, CabModel cabMo
         }
         
         ir[i] *= static_cast<float>(cabinetResponse);
+    }
+}
+
+double CabSimulation::getCabinetResonanceFreq(CabModel model)
+{
+    switch (model)
+    {
+        case Vintage4x12: return 95.0;
+        case Modern4x12: return 85.0;
+        case Combo2x12: return 110.0;
+        case Studio1x12: return 130.0;
+        case Bass8x10: return 55.0;
+        case Bass4x10: return 65.0;
+        default: return 100.0;
+    }
+}
+
+double CabSimulation::getCabinetColorationFactor(CabModel model, double time)
+{
+    switch (model)
+    {
+        case Vintage4x12: 
+            return 1.0 + 0.3 * std::exp(-time * 8.0) * std::sin(time * 2500.0 * 2.0 * juce::MathConstants<double>::pi);
+        case Modern4x12:
+            return 1.0 + 0.2 * std::exp(-time * 10.0) * std::sin(time * 3200.0 * 2.0 * juce::MathConstants<double>::pi);
+        case Combo2x12:
+            return 1.0 + 0.25 * std::exp(-time * 9.0) * std::sin(time * 2800.0 * 2.0 * juce::MathConstants<double>::pi);
+        case Studio1x12:
+            return 1.0 + 0.2 * std::exp(-time * 11.0) * std::sin(time * 3000.0 * 2.0 * juce::MathConstants<double>::pi);
+        case Bass8x10:
+            return 1.0 + 0.4 * std::exp(-time * 6.0) * std::sin(time * 800.0 * 2.0 * juce::MathConstants<double>::pi);
+        case Bass4x10:
+            return 1.0 + 0.35 * std::exp(-time * 7.0) * std::sin(time * 1000.0 * 2.0 * juce::MathConstants<double>::pi);
+        default:
+            return 1.0;
+    }
+}
+
+void CabSimulation::applyAdvancedMicCharacteristics(std::vector<float>& ir, MicType micType)
+{
+    if (ir.empty()) return;
+    
+    for (size_t i = 0; i < ir.size(); ++i)
+    {
+        double t = static_cast<double>(i) / sampleRate;
+        double micResponse = 1.0;
+        
+        switch (micType)
+        {
+            case Dynamic57:
+                micResponse = 1.0 + 0.4 * std::sin(t * 5000.0 * 2.0 * juce::MathConstants<double>::pi);
+                micResponse *= std::exp(-t * 12000.0 * 0.08);
+                micResponse += 0.1 * std::sin(t * 3000.0 * 2.0 * juce::MathConstants<double>::pi);
+                break;
+            case Dynamic421:
+                micResponse = 1.0 + 0.3 * std::sin(t * 200.0 * 2.0 * juce::MathConstants<double>::pi);
+                micResponse += 0.2 * std::sin(t * 3500.0 * 2.0 * juce::MathConstants<double>::pi);
+                micResponse *= (1.0 + 0.1 * std::sin(t * 1000.0 * 2.0 * juce::MathConstants<double>::pi));
+                break;
+            case Condenser414:
+                micResponse = 1.0 + 0.2 * std::sin(t * 12000.0 * 2.0 * juce::MathConstants<double>::pi);
+                micResponse += 0.15 * std::sin(t * 18000.0 * 2.0 * juce::MathConstants<double>::pi);
+                micResponse *= (1.0 + 0.05 * std::sin(t * 8000.0 * 2.0 * juce::MathConstants<double>::pi));
+                break;
+            case Ribbon121:
+                micResponse = 1.0 - 0.3 * std::sin(t * 10000.0 * 2.0 * juce::MathConstants<double>::pi);
+                micResponse *= std::exp(-t * 15000.0 * 0.04);
+                micResponse += 0.1 * std::sin(t * 2000.0 * 2.0 * juce::MathConstants<double>::pi);
+                break;
+        }
+        
+        ir[i] *= static_cast<float>(micResponse);
     }
 }

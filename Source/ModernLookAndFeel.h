@@ -16,10 +16,11 @@ public:
         setColour(juce::ToggleButton::tickColourId, juce::Colour(0xff007aff));
         setColour(juce::ToggleButton::tickDisabledColourId, juce::Colour(0xffd1d1d6));
         
-        setColour(juce::TabbedComponent::backgroundColourId, juce::Colour(0xff161b22));
-        setColour(juce::TabbedComponent::outlineColourId, juce::Colour(0xff30363d));
-        setColour(juce::TabbedButtonBar::tabOutlineColourId, juce::Colour(0xff30363d));
-        setColour(juce::TabbedButtonBar::frontOutlineColourId, juce::Colour(0xff58a6ff));
+        setColour(juce::TabbedComponent::backgroundColourId, juce::Colour(0xfff5f5f7));
+        setColour(juce::TabbedComponent::outlineColourId, juce::Colour(0xffd1d1d6));
+        setColour(juce::TabbedButtonBar::tabOutlineColourId, juce::Colour(0xffd1d1d6));
+        setColour(juce::TabbedButtonBar::frontOutlineColourId, juce::Colour(0xff007aff));
+        setColour(juce::TabbedButtonBar::tabTextColourId, juce::Colour(0xff1d1d1f));
     }
     
     void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,

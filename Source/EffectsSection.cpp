@@ -145,17 +145,17 @@ EffectsSection::EffectsSection(AlturadspAudioProcessor& processor) : audioProces
 
 void EffectsSection::paint(juce::Graphics& g)
 {
-    juce::ColourGradient gradient(juce::Colour(0xff161b22), 0, 0,
-                                 juce::Colour(0xff21262d), 0, getHeight(), false);
+    juce::ColourGradient gradient(juce::Colour(0xfff5f5f7), 0, 0,
+                                 juce::Colour(0xffe5e5e7), 0, getHeight(), false);
     g.setGradientFill(gradient);
     g.fillAll();
     
     auto headerArea = getLocalBounds().removeFromTop(60);
-    g.setColour(juce::Colour(0xff0d1117).withAlpha(0.6f));
+    g.setColour(juce::Colours::white.withAlpha(0.9f));
     g.fillRoundedRectangle(headerArea.reduced(10).toFloat(), 8.0f);
     
-    g.setColour(juce::Colour(0xfff0f6fc));
-    g.setFont(juce::FontOptions(20.0f, juce::Font::bold));
+    g.setColour(juce::Colour(0xff1d1d1f));
+    g.setFont(juce::FontOptions(20.0f, juce::Font::plain));
     g.drawText("EFFECTS CHAIN", headerArea, juce::Justification::centred);
 }
 
@@ -241,6 +241,41 @@ void EffectsSection::setupEffectModules()
     delayAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.getValueTreeState(), "delayEnable", delayModule->enableButton);
     reverbAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.getValueTreeState(), "reverbEnable", reverbModule->enableButton);
     filterAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.getValueTreeState(), "vintageFilterEnable", vintageFilterModule->enableButton);
+    
+    noiseGateModule->enableButton.onStateChange = [this]() {
+        audioProcessor.getValueTreeState().getParameter("noiseGateEnable")->setValueNotifyingHost(
+            noiseGateModule->enableButton.getToggleState() ? 1.0f : 0.0f);
+    };
+    
+    compressorModule->enableButton.onStateChange = [this]() {
+        audioProcessor.getValueTreeState().getParameter("compressorEnable")->setValueNotifyingHost(
+            compressorModule->enableButton.getToggleState() ? 1.0f : 0.0f);
+    };
+    
+    chorusModule->enableButton.onStateChange = [this]() {
+        audioProcessor.getValueTreeState().getParameter("chorusEnable")->setValueNotifyingHost(
+            chorusModule->enableButton.getToggleState() ? 1.0f : 0.0f);
+    };
+    
+    phaserModule->enableButton.onStateChange = [this]() {
+        audioProcessor.getValueTreeState().getParameter("phaserEnable")->setValueNotifyingHost(
+            phaserModule->enableButton.getToggleState() ? 1.0f : 0.0f);
+    };
+    
+    delayModule->enableButton.onStateChange = [this]() {
+        audioProcessor.getValueTreeState().getParameter("delayEnable")->setValueNotifyingHost(
+            delayModule->enableButton.getToggleState() ? 1.0f : 0.0f);
+    };
+    
+    reverbModule->enableButton.onStateChange = [this]() {
+        audioProcessor.getValueTreeState().getParameter("reverbEnable")->setValueNotifyingHost(
+            reverbModule->enableButton.getToggleState() ? 1.0f : 0.0f);
+    };
+    
+    vintageFilterModule->enableButton.onStateChange = [this]() {
+        audioProcessor.getValueTreeState().getParameter("vintageFilterEnable")->setValueNotifyingHost(
+            vintageFilterModule->enableButton.getToggleState() ? 1.0f : 0.0f);
+    };
     
     thresholdAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.getValueTreeState(), "noiseGateThreshold", noiseGateThresholdSlider);
     ratioAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.getValueTreeState(), "compressorRatio", compressorRatioSlider);
